@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#123b52">
+  <title>WeCare | Doctor Directory</title>
+  <style>
+    :root {
+      --navy: #123b52; --teal: #159a91; --pale: #eaf5f5;
+      --ink: #18313d; --muted: #647782; --line: #dce7eb;
+      --white: #fff; --danger: #b42318; --shadow: 0 12px 35px rgba(18,59,82,.09);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: #f4f8fa; color: var(--ink); }
+    header { background: linear-gradient(120deg, #123b52, #176d78); color: white; padding: 28px 20px; }
+    .header-inner, main { width: min(1100px, 94%); margin: auto; }
+    .brand { display:flex; align-items:center; gap:14px; }
+    .brand-mark { width:48px; height:48px; border-radius:15px; display:grid; place-items:center; background:#ffffff20; font-size:25px; }
+    h1 { margin:0; font-size: clamp(24px, 4vw, 34px); }
+    .tagline { margin:7px 0 0; color:#d7eeee; font-size:14px; }
+    main { padding: 28px 0 50px; }
+    .topline { display:flex; justify-content:space-between; align-items:end; gap:15px; flex-wrap:wrap; margin-bottom:18px; }
+    h2 { margin:0 0 6px; font-size:22px; }
+    .sub { color:var(--muted); font-size:14px; }
+    .stats { color:var(--muted); font-size:13px; }
+    .panel { background:var(--white); border:1px solid var(--line); border-radius:17px; padding:20px; box-shadow:var(--shadow); margin-bottom:20px; }
+    .toolbar { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+    .search-wrap { position:relative; flex:1 1 260px; }
+    .search-wrap span { position:absolute; left:14px; top:12px; color:#7b9099; }
+    input { width:100%; border:1px solid #ccdbe1; border-radius:10px; padding:12px 13px; font:inherit; color:var(--ink); background:white; }
+    .search-wrap input { padding-left:40px; }
+    input:focus { outline:3px solid #159a9125; border-color:var(--teal); }
+    button { border:0; border-radius:10px; padding:12px 17px; font-weight:700; font-size:14px; cursor:pointer; }
+    .primary { background:var(--teal); color:white; }
+    .primary:hover { background:#107e77; }
+    .secondary { background:#eaf1f4; color:var(--navy); }
+    .danger { color:var(--danger); background:#fff0ef; }
+    .table-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; min-width:760px; }
+    th { text-align:left; color:#58717c; background:#f6fafb; font-size:12px; text-transform:uppercase; letter-spacing:.05em; padding:14px 12px; }
+    td { padding:15px 12px; border-top:1px solid var(--line); font-size:14px; vertical-align:middle; }
+    .doctor-name { font-weight:700; color:var(--navy); }
+    .specialty { display:inline-block; background:var(--pale); color:#14766f; border-radius:20px; padding:5px 9px; font-size:12px; }
+    .actions { display:flex; gap:7px; }
+    .actions button { padding:8px 10px; font-size:12px; }
+    .empty { text-align:center; color:var(--muted); padding:35px 12px; }
+    .modal-backdrop { display:none; position:fixed; inset:0; background:#0c2634a8; padding:18px; z-index:5; align-items:center; justify-content:center; }
+    .modal-backdrop.show { display:flex; }
+    .modal { width:min(620px,100%); max-height:92vh; overflow:auto; background:white; border-radius:18px; padding:23px; box-shadow:0 25px 70px #0004; }
+    .modal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
+    .modal-head h2 { margin:0; }
+    .close { background:transparent; color:var(--muted); font-size:24px; padding:2px 8px; }
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .field label { display:block; font-size:13px; font-weight:700; margin-bottom:7px; }
+    .field.full { grid-column:1/-1; }
+    .form-actions { display:flex; justify-content:flex-end; gap:9px; margin-top:20px; }
+    .note { color:var(--muted); font-size:12px; line-height:1.5; margin-top:15px; }
+    .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#173d50; color:white; padding:12px 18px; border-radius:10px; box-shadow:var(--shadow); display:none; z-index:10; font-size:14px; }
+    .toast.show { display:block; }
+    footer { text-align:center; color:#7b8d95; font-size:12px; padding:20px; }
+    @media(max-width:600px) {
+      .form-grid { grid-template-columns:1fr; }
+      .field.full { grid-column:auto; }
+      .panel { padding:15px; }
+      .topline { align-items:start; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner brand">
+      <div class="brand-mark" aria-hidden="true">✚</div>
+      <div>
+        <h1>WeCare Outsourcing Company</h1>
+        <p class="tagline">Doctor Directory · Find and manage provider information</p>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="topline">
+      <div>
+        <h2>Doctor Directory</h2>
+        <div class="sub">Manage doctor contact details in one place.</div>
+      </div>
+      <div class="stats" id="doctorCount">0 doctors</div>
+    </div>
+
+    <section class="panel" aria-label="Doctor directory tools">
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span aria-hidden="true">⌕</span>
+          <input id="searchInput" type="search" placeholder="Search name, specialty, phone, email or fax…" aria-label="Search doctors">
+        </div>
+        <button class="primary" id="addButton" type="button">＋ Add Doctor</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Doctor Name</th><th>Specialty</th><th>Contact Number</th>
+              <th>Email</th><th>Fax Number</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="doctorTable"></tbody>
+        </table>
+        <div class="empty" id="emptyState">No doctors added yet. Select <b>Add Doctor</b> to create your directory.</div>
+      </div>
+      <p class="note">Your entries are saved in this browser on this device using local storage. This starter version does not sync between users or devices. Avoid entering sensitive patient information.</p>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="modalTitle">Add Doctor</h2>
+        <button class="close" id="closeModal" type="button" aria-label="Close">×</button>
+      </div>
+      <form id="doctorForm">
+        <div class="form-grid">
+          <div class="field full">
+            <label for="doctorName">Doctor Name *</label>
+            <input id="doctorName" name="doctorName" required maxlength="100" placeholder="e.g. Dr. Maria Santos">
+          </div>
+          <div class="field">
+            <label for="specialty">Specialty *</label>
+            <input id="specialty" name="specialty" required maxlength="100" placeholder="e.g. Oncology">
+          </div>
+          <div class="field">
+            <label for="contact">Contact Number</label>
+            <input id="contact" name="contact" type="tel" maxlength="40" placeholder="+1 555 123 4567">
+          </div>
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" maxlength="120" placeholder="doctor@example.com">
+          </div>
+          <div class="field">
+            <label for="fax">Fax Number</label>
+            <input id="fax" name="fax" type="tel" maxlength="40" placeholder="+1 555 123 4568">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="secondary" id="cancelButton" type="button">Cancel</button>
+          <button class="primary" type="submit">Save Doctor</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <footer>© <span id="year"></span> WeCare Outsourcing Company · Doctor Directory</footer>
+
+  <script>
+    const STORAGE_KEY = "wecareDoctorDirectory_v1";
+    let doctors = loadDoctors();
+    let editingId = null;
+
+    const tableBody = document.getElementById("doctorTable");
+    const searchInput = document.getElementById("searchInput");
+    const modalBackdrop = document.getElementById("modalBackdrop");
+    const doctorForm = document.getElementById("doctorForm");
+
+    function loadDoctors() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        return saved ? JSON.parse(saved) : [];
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function saveDoctors() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(doctors));
+    }
+
+    function safeText(value) {
+      return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+      })[char]);
+    }
+
+    function renderDoctors() {
+      const query = searchInput.value.trim().toLowerCase();
+      const filtered = doctors.filter(doctor =>
+        [doctor.name, doctor.specialty, doctor.contact, doctor.email, doctor.fax]
+          .some(value => String(value || "").toLowerCase().includes(query))
+      );
+
+      document.getElementById("doctorCount").textContent =
+        `${doctors.length} ${doctors.length === 1 ? "doctor" : "doctors"} · ${filtered.length} shown`;
+      document.getElementById("emptyState").style.display = filtered.length ? "none" : "block";
+      document.getElementById("emptyState").innerHTML = doctors.length
+        ? "No matching doctors found. Try another search."
+        : 'No doctors added yet. Select <b>Add Doctor</b> to create your directory.';
+
+      tableBody.innerHTML = filtered.map(doctor => `
+        <tr>
+          <td class="doctor-name">${safeText(doctor.name)}</td>
+          <td><span class="specialty">${safeText(doctor.specialty)}</span></td>
+          <td>${safeText(doctor.contact) || "—"}</td>
+          <td>${doctor.email ? `<a href="mailto:${safeText(doctor.email)}">${safeText(doctor.email)}</a>` : "—"}</td>
+          <td>${safeText(doctor.fax) || "—"}</td>
+          <td><div class="actions">
+            <button class="secondary" type="button" data-edit="${safeText(doctor.id)}">Edit</button>
+            <button class="danger" type="button" data-delete="${safeText(doctor.id)}">Delete</button>
+          </div></td>
+        </tr>
+      `).join("");
+    }
+
+    function openModal(doctor = null) {
+      editingId = doctor ? doctor.id : null;
+      doctorForm.reset();
+      document.getElementById("modalTitle").textContent = doctor ? "Edit Doctor" : "Add Doctor";
+      if (doctor) {
+        document.getElementById("doctorName").value = doctor.name || "";
+        document.getElementById("specialty").value = doctor.specialty || "";
+        document.getElementById("contact").value = doctor.contact || "";
+        document.getElementById("email").value = doctor.email || "";
+        document.getElementById("fax").value = doctor.fax || "";
+      }
+      modalBackdrop.classList.add("show");
+      document.getElementById("doctorName").focus();
+    }
+
+    function closeModal() {
+      modalBackdrop.classList.remove("show");
+      editingId = null;
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2400);
+    }
+
+    document.getElementById("addButton").addEventListener("click", () => openModal());
+    document.getElementById("closeModal").addEventListener("click", closeModal);
+    document.getElementById("cancelButton").addEventListener("click", closeModal);
+    modalBackdrop.addEventListener("click", event => {
+      if (event.target === modalBackdrop) closeModal();
+    });
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") closeModal();
+    });
+    searchInput.addEventListener("input", renderDoctors);
+
+    doctorForm.addEventListener("submit", event => {
+      event.preventDefault();
+      const doctor = {
+        id: editingId || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())),
+        name: document.getElementById("doctorName").value.trim(),
+        specialty: document.getElementById("specialty").value.trim(),
+        contact: document.getElementById("contact").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        fax: document.getElementById("fax").value.trim()
+      };
+      if (editingId) {
+        doctors = doctors.map(item => item.id === editingId ? doctor : item);
+        showToast("Doctor details updated.");
+      } else {
+        doctors.push(doctor);
+        showToast("Doctor added to directory.");
+      }
+      saveDoctors();
+      renderDoctors();
+      closeModal();
+    });
+
+    tableBody.addEventListener("click", event => {
+      const editButton = event.target.closest("[data-edit]");
+      const deleteButton = event.target.closest("[data-delete]");
+      if (editButton) {
+        const doctor = doctors.find(item => item.id === editButton.dataset.edit);
+        if (doctor) openModal(doctor);
+      }
+      if (deleteButton) {
+        const doctor = doctors.find(item => item.id === deleteButton.dataset.delete);
+        if (doctor && confirm(`Delete ${doctor.name} from the directory?`)) {
+          doctors = doctors.filter(item => item.id !== doctor.id);
+          saveDoctors();
+          renderDoctors();
+          showToast("Doctor deleted.");
+        }
+      }
+    });
+
+    document.getElementById("year").textContent = new Date().getFullYear();
+    renderDoctors();
+  </script>
+</body>
+</html>
